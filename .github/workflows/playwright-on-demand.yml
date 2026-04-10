@@ -1,0 +1,113 @@
+name: Playwright On Demand
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_env:
+        description: Runtime environment file to use
+        required: true
+        default: qa
+        type: choice
+        options:
+          - local
+          - qa
+          - prod
+      suite:
+        description: Suite or group to execute
+        required: true
+        default: ui
+        type: choice
+        options:
+          - ui
+          - smoke
+          - sanity
+          - regression
+          - service
+          - full
+      browser:
+        description: Browser for UI execution
+        required: true
+        default: chromium
+        type: choice
+        options:
+          - chromium
+          - firefox
+          - webkit
+      log_level:
+        description: Framework log level
+        required: true
+        default: info
+        type: choice
+        options:
+          - info
+          - debug
+          - trace
+
+permissions:
+  contents: read
+
+jobs:
+  playwright:
+    name: Run ${{ github.event.inputs.suite }} suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TEST_ENV: ${{ github.event.inputs.test_env }}
+      LOG_LEVEL: ${{ github.event.inputs.log_level }}
+      INPUT_SUITE: ${{ github.event.inputs.suite }}
+      INPUT_BROWSER: ${{ github.event.inputs.browser }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Execute selected suite
+        shell: bash
+        run: |
+          case "${INPUT_SUITE}" in
+            ui)
+              env="${TEST_ENV}" npx playwright test --project="${INPUT_BROWSER}"
+              ;;
+            smoke)
+              env="${TEST_ENV}" npm run test:smoke -- --project="${INPUT_BROWSER}"
+              ;;
+            sanity)
+              env="${TEST_ENV}" npm run test:sanity -- --project="${INPUT_BROWSER}"
+              ;;
+            regression)
+              env="${TEST_ENV}" npm run test:regression -- --project="${INPUT_BROWSER}"
+              ;;
+            service)
+              env="${TEST_ENV}" npm run test:service
+              ;;
+            full)
+              env="${TEST_ENV}" npm run test:full
+              ;;
+            *)
+              echo "Unsupported suite selection: ${INPUT_SUITE}"
+              exit 1
+              ;;
+          esac
+
+      - name: Upload Playwright and test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ github.run_id }}
+          path: |
+            report/playwright-report
+            report/test-results
+            report/allure-results
+            report/allure-report
+

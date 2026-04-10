@@ -219,6 +219,10 @@ kubectl apply -f orchestration/kubernetes/tests/playwright-job.yaml
 
 Use [docs/pipeline-prerequisites.md](/Users/yogeshgite/Documents/monkey-test/docs/pipeline-prerequisites.md) for the full installation and setup checklist for Docker, Docker Compose, Jenkins, Kubernetes, Allure, and Slack.
 
+For a simple GitHub-hosted manual runner, use [docs/github-actions-on-demand.md](/Users/yogeshgite/Documents/monkey-test/docs/github-actions-on-demand.md).
+
+For Dockerized Kubernetes pod execution from GitHub Actions, use [docs/github-actions-k8s.md](/Users/yogeshgite/Documents/monkey-test/docs/github-actions-k8s.md).
+
 For GitHub Actions execution with Dockerized test pods in Kubernetes, use [docs/github-actions-k8s.md](/Users/yogeshgite/Documents/monkey-test/docs/github-actions-k8s.md).
 
 ## Custom assertion strategy
