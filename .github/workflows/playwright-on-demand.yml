@@ -52,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
+      CI: "true"
       TEST_ENV: ${{ github.event.inputs.test_env }}
       LOG_LEVEL: ${{ github.event.inputs.log_level }}
       INPUT_SUITE: ${{ github.event.inputs.suite }}
@@ -100,6 +101,20 @@ jobs:
               ;;
           esac
 
+      - name: Generate downloadable Allure HTML report
+        if: always()
+        shell: bash
+        run: |
+          if [ -d report/allure-results ] && find report/allure-results -type f | grep -q .; then
+            npm run report:allure:generate
+            npm run report:allure:generate:single
+            cd report
+            zip -r allure-report-html.zip allure-report >/dev/null
+            zip -r allure-report-single-html.zip allure-report-single >/dev/null
+          else
+            echo "No Allure results found. Skipping HTML report generation."
+          fi
+
       - name: Upload Playwright and test artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -110,4 +125,6 @@ jobs:
             report/test-results
             report/allure-results
             report/allure-report
-
+            report/allure-report-single
+            report/allure-report-html.zip
+            report/allure-report-single-html.zip

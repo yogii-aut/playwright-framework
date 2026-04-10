@@ -124,6 +124,10 @@ To run the full sequence of UI tests, service tests, and automatic Allure genera
 npm run test:full
 ```
 
+`npm run test:allure` and `npm run test:full` only start the Allure web server on local runs. In CI or GitHub Actions, they generate the HTML report but skip `serve` so the pipeline can complete cleanly.
+
+For GitHub Actions downloads, prefer the generated single-file Allure artifact because it can be opened directly after download without running a local server.
+
 ## Debug logging
 
 The framework now supports structured log levels and debug-log attachment into Allure.

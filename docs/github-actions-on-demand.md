@@ -19,7 +19,8 @@ When you trigger the workflow manually, it:
 3. installs npm dependencies
 4. installs Playwright browsers
 5. runs the suite you selected
-6. uploads the generated `report/` folders as GitHub Actions artifacts
+6. generates the Allure HTML report for download
+7. uploads the generated `report/` folders as GitHub Actions artifacts
 
 ## Supported inputs
 
@@ -61,6 +62,7 @@ The workflow asks for these values:
 - `full`
   - runs `npm run test:full`
   - this executes UI tests, service tests, and the automatic Allure flow
+  - in GitHub Actions, the framework generates the Allure HTML report but does not start the Allure web server
 
 ## Required setup
 
@@ -121,6 +123,13 @@ The artifact contains:
 - `report/test-results`
 - `report/allure-results`
 - `report/allure-report`
+- `report/allure-report-single`
+- `report/allure-report-html.zip`
+- `report/allure-report-single-html.zip`
+
+Use `report/allure-report-single/index.html` or the zipped `report/allure-report-single-html.zip` when you want to open the Allure report directly from your machine after download.
+
+The normal `report/allure-report` folder is still generated for standard Allure compatibility, but the single-file report is the safer artifact for offline viewing.
 
 ## When to use this workflow vs the Kubernetes workflow
 

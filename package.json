@@ -31,6 +31,7 @@
     "test:service:posts": "playwright test src/tests/service/posts.service.spec.ts --project=api",
     "test:parallel:ui": "playwright test --project=chromium-parallel --project=firefox-parallel",
     "report:allure:generate": "allure generate report/allure-results --clean -o report/allure-report",
+    "report:allure:generate:single": "allure generate report/allure-results --clean --single-file -o report/allure-report-single",
     "report:allure:open": "allure open report/allure-report",
     "report:allure:serve": "allure serve report/allure-results",
     "notify:slack": "tsx orchestration/scripts/slack-notify.ts",
