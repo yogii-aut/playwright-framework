@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  playwright-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - config/environment/local.env
+    volumes:
+      - ./report/allure-results:/app/report/allure-results
+      - ./report/playwright-report:/app/report/playwright-report
+      - ./report/test-results:/app/report/test-results
+    command: ["npm", "run", "ci:smoke"]
+
+  allure-report:
+    image: frankescobar/allure-docker-service
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: 3
+      KEEP_HISTORY: 1
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./report/allure-results:/app/allure-results
+      - ./report/allure-report:/app/default-reports

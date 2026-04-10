@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${JOB_NAME}
+  labels:
+    app: playwright-tests
+    suite-group: ${SUITE_GROUP}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 1800
+  template:
+    metadata:
+      labels:
+        app: playwright-tests
+        suite-group: ${SUITE_GROUP}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: playwright-tests
+          image: ${IMAGE}
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: playwright-config
+            - secretRef:
+                name: playwright-secrets
+          env:
+            - name: TEST_ENV
+              value: ${EXECUTION_ENV}
+            - name: LOG_LEVEL
+              value: ${LOG_LEVEL}
+          command: ["/bin/sh", "-lc"]
+          args:
+            - "${TEST_COMMAND}"

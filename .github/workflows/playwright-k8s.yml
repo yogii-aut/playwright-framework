@@ -1,0 +1,188 @@
+name: Playwright Kubernetes Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_env:
+        description: Runtime environment file to use
+        required: true
+        default: qa
+        type: choice
+        options:
+          - local
+          - qa
+          - prod
+      log_level:
+        description: Framework log level
+        required: true
+        default: info
+        type: choice
+        options:
+          - info
+          - debug
+          - trace
+      image_tag:
+        description: Optional image tag override
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  K8S_NAMESPACE: qa-automation
+
+jobs:
+  build-image:
+    name: Build And Push Playwright Image
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      execution_env: ${{ steps.vars.outputs.execution_env }}
+      log_level: ${{ steps.vars.outputs.log_level }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve variables
+        id: vars
+        shell: bash
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG="${GITHUB_SHA}"
+          fi
+          echo "image=${REGISTRY,,}/${IMAGE_NAME,,}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "execution_env=${{ github.event.inputs.test_env }}" >> "$GITHUB_OUTPUT"
+          echo "log_level=${{ github.event.inputs.log_level }}" >> "$GITHUB_OUTPUT"
+
+      - name: Expose image metadata
+        id: meta
+        shell: bash
+        run: |
+          echo "image=${{ steps.vars.outputs.image }}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.vars.outputs.image }}
+
+  execute-in-k8s:
+    name: Run ${{ matrix.group }} In Kubernetes
+    needs: build-image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: smoke
+            command: npm run ci:smoke
+          - group: sanity
+            command: npm run test:sanity
+          - group: regression
+            command: npm run ci:regression
+          - group: service
+            command: npm run test:service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install envsubst
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
+
+      - name: Configure kubeconfig
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Create namespace if needed
+        shell: bash
+        run: |
+          kubectl get namespace "${K8S_NAMESPACE}" >/dev/null 2>&1 || kubectl create namespace "${K8S_NAMESPACE}"
+
+      - name: Apply config map
+        shell: bash
+        run: |
+          kubectl apply -n "${K8S_NAMESPACE}" -f orchestration/kubernetes/tests/playwright-configmap.yaml
+
+      - name: Apply secret from GitHub secrets
+        shell: bash
+        run: |
+          SECRET_ARGS=(
+            --namespace "${K8S_NAMESPACE}"
+            --from-literal=PASSWORD='${{ secrets.PASSWORD }}'
+          )
+
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            SECRET_ARGS+=(--from-literal=SLACK_WEBHOOK_URL='${{ secrets.SLACK_WEBHOOK_URL }}')
+          fi
+
+          kubectl create secret generic playwright-secrets \
+            "${SECRET_ARGS[@]}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Render Kubernetes job
+        shell: bash
+        env:
+          IMAGE: ${{ needs.build-image.outputs.image }}
+          JOB_NAME: playwright-${{ matrix.group }}-${{ github.run_id }}
+          SUITE_GROUP: ${{ matrix.group }}
+          EXECUTION_ENV: ${{ needs.build-image.outputs.execution_env }}
+          LOG_LEVEL: ${{ needs.build-image.outputs.log_level }}
+          TEST_COMMAND: ${{ matrix.command }}
+        run: |
+          envsubst < orchestration/kubernetes/tests/playwright-job-template.yaml > /tmp/playwright-job.yaml
+          cat /tmp/playwright-job.yaml
+
+      - name: Apply Kubernetes job
+        shell: bash
+        run: |
+          kubectl apply -n "${K8S_NAMESPACE}" -f /tmp/playwright-job.yaml
+
+      - name: Wait for job completion
+        shell: bash
+        run: |
+          kubectl wait -n "${K8S_NAMESPACE}" --for=condition=complete "job/playwright-${{ matrix.group }}-${{ github.run_id }}" --timeout=1800s
+
+      - name: Collect pod reports
+        if: always()
+        shell: bash
+        run: |
+          POD_NAME="$(kubectl get pods -n "${K8S_NAMESPACE}" -l job-name=playwright-${{ matrix.group }}-${{ github.run_id }} -o jsonpath='{.items[0].metadata.name}')"
+          mkdir -p "report/k8s/${{ matrix.group }}"
+          kubectl cp "${K8S_NAMESPACE}/${POD_NAME}:/app/report" "report/k8s/${{ matrix.group }}"
+          kubectl logs -n "${K8S_NAMESPACE}" "${POD_NAME}" > "report/k8s/${{ matrix.group }}/pod.log" || true
+
+      - name: Upload report artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.group }}
+          path: report/k8s/${{ matrix.group }}
+
+      - name: Cleanup Kubernetes job
+        if: always()
+        shell: bash
+        run: |
+          kubectl delete -n "${K8S_NAMESPACE}" "job/playwright-${{ matrix.group }}-${{ github.run_id }}" --ignore-not-found

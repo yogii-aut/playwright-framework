@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: playwright-config
+data:
+  BASE_URL: "https://www.saucedemo.com"
+  TEST_ENV: "qa"
+  HEADLESS: "true"
+  WORKERS: "4"
+  RETRIES: "1"
+

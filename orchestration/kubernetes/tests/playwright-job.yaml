@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: playwright-tests
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: playwright-tests
+          image: saucedemo-playwright-framework:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: playwright-config
+            - secretRef:
+                name: playwright-secrets
+          command: ["npm", "run", "ci:regression"]
+
