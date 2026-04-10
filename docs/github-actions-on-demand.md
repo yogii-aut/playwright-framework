@@ -45,6 +45,9 @@ The workflow asks for these values:
   - `info`
   - `debug`
   - `trace`
+- `publish_to_github_pages`
+  - `true`
+  - `false`
 
 ## How each suite behaves
 
@@ -63,6 +66,27 @@ The workflow asks for these values:
   - runs `npm run test:full`
   - this executes UI tests, service tests, and the automatic Allure flow
   - in GitHub Actions, the framework generates the Allure HTML report but does not start the Allure web server
+
+## GitHub Pages publishing
+
+The workflow can optionally publish the single-file Allure report to GitHub Pages.
+
+When `publish_to_github_pages = true`:
+
+- the workflow uploads `report/allure-report-single/index.html` as the GitHub Pages site artifact
+- GitHub Pages deploys that file as the site homepage
+- you can open the report in the browser directly from GitHub without downloading the artifact
+
+### One-time GitHub setup
+
+In your repository:
+
+1. open `Settings`
+2. open `Pages`
+3. under `Build and deployment`
+4. set `Source` to `GitHub Actions`
+
+After that, the workflow can deploy the report to Pages.
 
 ## Required setup
 
@@ -130,6 +154,8 @@ The artifact contains:
 Use `report/allure-report-single/index.html` or the zipped `report/allure-report-single-html.zip` when you want to open the Allure report directly from your machine after download.
 
 The normal `report/allure-report` folder is still generated for standard Allure compatibility, but the single-file report is the safer artifact for offline viewing.
+
+If you enable GitHub Pages publishing, you can open the report from the deployed Pages URL instead of downloading it locally.
 
 ## When to use this workflow vs the Kubernetes workflow
 

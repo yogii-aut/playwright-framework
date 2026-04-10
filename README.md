@@ -227,8 +227,6 @@ For a simple GitHub-hosted manual runner, use [docs/github-actions-on-demand.md]
 
 For Dockerized Kubernetes pod execution from GitHub Actions, use [docs/github-actions-k8s.md](/Users/yogeshgite/Documents/monkey-test/docs/github-actions-k8s.md).
 
-For GitHub Actions execution with Dockerized test pods in Kubernetes, use [docs/github-actions-k8s.md](/Users/yogeshgite/Documents/monkey-test/docs/github-actions-k8s.md).
-
 ## Custom assertion strategy
 
 Two assertion styles are intentionally supported:
@@ -253,3 +251,7 @@ This gives teams a clean default while still enabling richer assertion compositi
 - Add cart, checkout, and order-complete pages if you want end-to-end purchase coverage.
 - Wire Slack webhook and Jenkins Allure publishing endpoint in your target environment.
 - If you want API, contract, or service-test support next, the current structure is ready to expand without redesign.
+
+## Copyright
+
+Copyright (c) 2026 `monkey-test` contributors. All rights reserved.

@@ -42,9 +42,16 @@ on:
           - info
           - debug
           - trace
+      publish_to_github_pages:
+        description: Publish the single-file Allure report to GitHub Pages
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   playwright:
@@ -108,12 +115,24 @@ jobs:
           if [ -d report/allure-results ] && find report/allure-results -type f | grep -q .; then
             npm run report:allure:generate
             npm run report:allure:generate:single
+            mkdir -p github-pages
+            cp report/allure-report-single/index.html github-pages/index.html
             cd report
             zip -r allure-report-html.zip allure-report >/dev/null
             zip -r allure-report-single-html.zip allure-report-single >/dev/null
           else
             echo "No Allure results found. Skipping HTML report generation."
           fi
+
+      - name: Configure GitHub Pages
+        if: ${{ always() && github.event.inputs.publish_to_github_pages == 'true' }}
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        if: ${{ always() && github.event.inputs.publish_to_github_pages == 'true' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: github-pages
 
       - name: Upload Playwright and test artifacts
         if: always()
@@ -128,3 +147,16 @@ jobs:
             report/allure-report-single
             report/allure-report-html.zip
             report/allure-report-single-html.zip
+
+  publish-allure-pages:
+    name: Publish Allure To GitHub Pages
+    if: ${{ github.event.inputs.publish_to_github_pages == 'true' }}
+    needs: playwright
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
