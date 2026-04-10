@@ -2,6 +2,9 @@
 
 Production-ready UI automation framework for [SauceDemo](https://www.saucedemo.com) using Playwright, TypeScript, Page Object Model, Allure reporting, Slack notifications, Docker, Kubernetes, and Jenkins.
 
+<img width="955" height="478" alt="Framework-Arch-Diagram" src="https://github.com/user-attachments/assets/b00ed8be-deb8-4b1b-9b06-e1ea0d64c2ca" />
+
+
 ## What this framework covers
 
 - Playwright + TypeScript + Page Object Model.
