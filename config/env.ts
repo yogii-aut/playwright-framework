@@ -47,6 +47,19 @@ const rawEnvSchema = z.object({
   SLACK_CHANNEL: z.string().default('#qa-automation'),
   JENKINS_BUILD_URL: z.string().optional(),
   ALLURE_REPORT_URL: z.string().optional(),
+  APPIUM_HOST: z.string().default('127.0.0.1'),
+  APPIUM_PORT: z
+    .string()
+    .default('4723')
+    .transform((value) => Number(value)),
+  IOS_DEVICE_NAME: z.string().default('iPhone 16'),
+  IOS_PLATFORM_VERSION: z.string().default('18.4'),
+  IOS_BUNDLE_ID: z.string().default('com.apple.Preferences'),
+  IOS_APP_PATH: z.string().optional(),
+  IOS_NO_RESET: z
+    .string()
+    .default('true')
+    .transform((value) => value === 'true'),
   STANDARD_USER: z.string().default('standard_user'),
   LOCKED_OUT_USER: z.string().default('locked_out_user'),
   PROBLEM_USER: z.string().default('problem_user'),
@@ -77,6 +90,13 @@ export const env = {
   slackChannel: parsedEnv.SLACK_CHANNEL,
   jenkinsBuildUrl: parsedEnv.JENKINS_BUILD_URL,
   allureReportUrl: parsedEnv.ALLURE_REPORT_URL,
+  appiumHost: parsedEnv.APPIUM_HOST,
+  appiumPort: parsedEnv.APPIUM_PORT,
+  iosDeviceName: parsedEnv.IOS_DEVICE_NAME,
+  iosPlatformVersion: parsedEnv.IOS_PLATFORM_VERSION,
+  iosBundleId: parsedEnv.IOS_BUNDLE_ID,
+  iosAppPath: parsedEnv.IOS_APP_PATH,
+  iosNoReset: parsedEnv.IOS_NO_RESET,
   standardUser: parsedEnv.STANDARD_USER,
   lockedOutUser: parsedEnv.LOCKED_OUT_USER,
   problemUser: parsedEnv.PROBLEM_USER,

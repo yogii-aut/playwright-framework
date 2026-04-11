@@ -230,6 +230,8 @@ For a simple GitHub-hosted manual runner, use [docs/github-actions-on-demand.md]
 
 For Dockerized Kubernetes pod execution from GitHub Actions, use [docs/github-actions-k8s.md](/Users/yogeshgite/Documents/monkey-test/docs/github-actions-k8s.md).
 
+For simulator-based iOS Appium testing, use [docs/mobile-ios-appium.md](/Users/yogeshgite/Documents/monkey-test/docs/mobile-ios-appium.md).
+
 ## Custom assertion strategy
 
 Two assertion styles are intentionally supported:

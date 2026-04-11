@@ -4,7 +4,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["ES2022", "DOM"],
-    "types": ["node", "@playwright/test"],
+    "types": ["node", "@playwright/test", "@wdio/globals/types", "@wdio/mocha-framework"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -16,5 +16,12 @@
     },
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "config/**/*.ts", "orchestration/scripts/**/*.ts", "playwright.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "config/**/*.ts",
+    "orchestration/scripts/**/*.ts",
+    "playwright.config.ts",
+    "wdio.ios.conf.ts"
+  ]
 }

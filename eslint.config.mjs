@@ -32,5 +32,12 @@ export default tseslint.config(
       ...playwright.configs['flat/recommended'].rules
     }
   },
+  {
+    files: ['src/tests/mobile/**/*.ts'],
+    rules: {
+      'playwright/no-standalone-expect': 'off',
+      'playwright/no-useless-await': 'off'
+    }
+  },
   prettier
 );
